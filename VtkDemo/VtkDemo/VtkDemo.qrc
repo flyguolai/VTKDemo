@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/VtkDemo">
+        <file>ImgSrc/openFile.png</file>
+        <file>ImgSrc/marchingCube.png</file>
+        <file>ImgSrc/RayCasting.png</file>
+        <file>ImgSrc/ThreeView.png</file>
+    </qresource>
+</RCC>
