@@ -2,6 +2,8 @@
 
 #include <QtWidgets/QMainWindow>
 #include "ui_VtkDemo.h"
+#include "Graphics.h"
+
 
 class VtkDemo : public QMainWindow
 {
@@ -17,7 +19,21 @@ public:
 	void open();//打开的方法
 
 	void connectRegiste();// QT 信号槽注册
+
+	void SetThreeViewMode();
+
+	void SetMarchingCubeMode();
+
+	void SetRayCastingMode();
+
+	void DeleteAllView();
+
 private:
     Ui::VtkDemoClass ui;
 	QString DicomPath;
+	QAction *actionThreeView;
+	QAction *actionMarchingCube;
+	QAction *actionRayCasting;
+	QAction *actionDeleteView;
+	Graphics *graphics;
 };

@@ -68,6 +68,7 @@ public:
         gridLayout->setContentsMargins(11, 11, 11, 11);
         gridLayout->setObjectName(QStringLiteral("gridLayout"));
         gridLayout->setContentsMargins(0, 0, 0, 0);
+
         qvtkWidget3 = new QVTKWidget(gridLayoutWidget);
         qvtkWidget3->setObjectName(QStringLiteral("qvtkWidget3"));
 

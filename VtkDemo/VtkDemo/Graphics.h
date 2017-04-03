@@ -1,19 +1,18 @@
 #pragma once
 #include <QtWidgets/QMainWindow>
 #include <QObject>
-#include "VtkDemo.h"
+
+#include "QVTKWidget.h"
+
 class Graphics:public QObject
 {
 	Q_OBJECT
 public:
-	void setUi(VtkDemo *);
 	void RenderThreeView(QVTKWidget *, QVTKWidget *, QVTKWidget *, QVTKWidget *);
 	void RenderMarchingCube(QVTKWidget *);
-	void RenderRayCasting();
-	void ClearAllGraphics();
+	void RenderRayCasting(QVTKWidget *);
 	Graphics();
 	~Graphics();
 private:
-	VtkDemo *uiView;
 };
 

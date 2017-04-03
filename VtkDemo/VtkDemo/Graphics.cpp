@@ -43,6 +43,9 @@
 #include "vtkContourFilter.h"
 #include "vtkPolyDataMapper.h"
 #include "vtkOutlineFilter.h"
+#include "vtkInteractorStyleTrackball.h"
+#include "vtkGPUVolumeRayCastMapper.h"
+#include "vtkSmartVolumeMapper.h"
 
 
 
@@ -61,7 +64,6 @@ void Graphics::RenderThreeView(QVTKWidget *widget1, QVTKWidget *widget2, QVTKWid
 	reader->SetDirectoryName("D:\\vtkproject\\digest_article");
 	reader->Update();
 
-
 	int imageDims[3];
 	reader->GetOutput()->GetDimensions(imageDims);
 	vtkSmartPointer<vtkResliceImageViewer> riw[3];
@@ -78,11 +80,6 @@ void Graphics::RenderThreeView(QVTKWidget *widget1, QVTKWidget *widget2, QVTKWid
 		//riw[i]->SetupInteractor(iteractorImage);
 	}
 	//widget1->SetRenderWindow(riw[0]->GetRenderWindow());
-
-	widget1->GetRenderWindow()->AddRenderer(riw[0]->GetRenderer());
-	widget2->GetRenderWindow()->AddRenderer(riw[1]->GetRenderer());
-	widget3->GetRenderWindow()->AddRenderer(riw[2]->GetRenderer());
-
 	for (int i = 0; i < 3; i++)
 	{
 		// make them all share the same reslice cursor object.
@@ -93,7 +90,9 @@ void Graphics::RenderThreeView(QVTKWidget *widget1, QVTKWidget *widget2, QVTKWid
 		riw[i]->Render();
 	}
 
-	
+	widget1->GetRenderWindow()->AddRenderer(riw[0]->GetRenderer());
+	widget2->GetRenderWindow()->AddRenderer(riw[1]->GetRenderer());
+	widget3->GetRenderWindow()->AddRenderer(riw[2]->GetRenderer());
 
 	vtkSmartPointer<vtkCellPicker> picker =
 		vtkSmartPointer<vtkCellPicker>::New();
@@ -108,11 +107,10 @@ void Graphics::RenderThreeView(QVTKWidget *widget1, QVTKWidget *widget2, QVTKWid
 	widget4->GetRenderWindow()->AddRenderer(ren);
 	vtkRenderWindowInteractor *iren = widget4->GetInteractor();
 
+	vtkSmartPointer< vtkRenderer > ren1 =
+		vtkSmartPointer< vtkRenderer >::New();
+
 	vtkSmartPointer <vtkImagePlaneWidget> planeWidget[3];
-
-	//vtkSmartPointer <vtkImageMapToWindowLevelColors> windowLevel[3];
-
-	//vtkSmartPointer <vtkImageActor> imageActor[3];
 
 	for (int i = 0; i < 3; i++)
 	{
@@ -138,9 +136,8 @@ void Graphics::RenderThreeView(QVTKWidget *widget1, QVTKWidget *widget2, QVTKWid
 		planeWidget[i]->SetPlaneOrientation(i);
 		planeWidget[i]->SetSliceIndex(imageDims[i] / 2);
 		planeWidget[i]->DisplayTextOn();
-		//planeWidget[i]->SetDefaultRenderer(ren);
+		planeWidget[i]->SetDefaultRenderer(ren);
 		planeWidget[i]->SetWindowLevel(1358, -27);
-		//planeWidget[i]->SetColorMap(windowLevel[i]) ;
 		planeWidget[i]->On();
 		planeWidget[i]->InteractionOn();
 
@@ -215,6 +212,71 @@ void Graphics::RenderMarchingCube(QVTKWidget *widget){
 
 	//  
 	aRenderer->ResetCameraClippingRange();
+}
+
+void Graphics::RenderRayCasting(QVTKWidget *widget){
+	vtkSmartPointer<vtkDICOMImageReader>dicomImagereader = vtkSmartPointer<vtkDICOMImageReader>::New();
+	dicomImagereader->SetDirectoryName("D:\\vtkproject\\digest_article");
+	dicomImagereader->SetDataByteOrderToLittleEndian();
+	dicomImagereader->Update();
+	//dicomImagereader->SetDataByteOrderToLittleEndian();
+
+	vtkSmartPointer<vtkImageCast>readerImageCast = vtkSmartPointer<vtkImageCast>::New();
+	readerImageCast->SetInputConnection(dicomImagereader->GetOutputPort());
+	readerImageCast->SetOutputScalarTypeToUnsignedShort();
+	readerImageCast->Update();
+
+	vtkSmartPointer<vtkPiecewiseFunction>opactiyTransferFunction = vtkSmartPointer<vtkPiecewiseFunction>::New();
+	opactiyTransferFunction->AddPoint(0, 0.00);
+	opactiyTransferFunction->AddPoint(100, 0.00);
+	opactiyTransferFunction->AddPoint(500, 0.15);
+	opactiyTransferFunction->AddPoint(1000, 0.15);
+	opactiyTransferFunction->AddPoint(1150, 0.85);
+
+	vtkSmartPointer<vtkColorTransferFunction>colorTransferFunction = vtkSmartPointer<vtkColorTransferFunction>::New();
+	colorTransferFunction->AddRGBPoint(0, 0.0, 0.0, 0.0);
+	colorTransferFunction->AddRGBPoint(500, 1.0, 0.5, 0.3);
+	colorTransferFunction->AddRGBPoint(1000, 1.0, 0.5, 0.3);
+	colorTransferFunction->AddRGBPoint(1150, 1.0, 1.0, 0.9);
+
+	vtkSmartPointer<vtkPiecewiseFunction>gradientTransferFunction = vtkSmartPointer<vtkPiecewiseFunction>::New();
+	gradientTransferFunction->AddPoint(0, 0.00);
+	gradientTransferFunction->AddPoint(500, 0.15);
+	gradientTransferFunction->AddPoint(1000, 0.15);
+	gradientTransferFunction->AddPoint(1150, 0.85);
+
+	vtkSmartPointer<vtkVolumeProperty>volumeProperty = vtkSmartPointer<vtkVolumeProperty>::New();
+	volumeProperty->SetColor(colorTransferFunction);
+	volumeProperty->SetScalarOpacity(opactiyTransferFunction);
+	volumeProperty->SetGradientOpacity(gradientTransferFunction);
+	volumeProperty->ShadeOn();//阴影  
+	volumeProperty->SetInterpolationTypeToLinear();//直线与样条插值之间逐发函数  
+	volumeProperty->SetAmbient(0.2);//环境光系数  
+	volumeProperty->SetDiffuse(0.9);//漫反射  
+	volumeProperty->SetSpecular(0.2);//高光系数  
+	volumeProperty->SetSpecularPower(10);//高光强度  
+
+	//vtkSmartPointer<vtkVolumeRayCastCompositeFunction>compositeRaycastFunction = vtkSmartPointer<vtkVolumeRayCastCompositeFunction>::New();
+
+	vtkSmartPointer<vtkGPUVolumeRayCastMapper>volumeMapper = vtkSmartPointer<vtkGPUVolumeRayCastMapper>::New();
+	//vtkSmartPointer<vtkSmartVolumeMapper> volumeMapper = vtkSmartPointer<vtkSmartVolumeMapper>::New();
+	//volumeMapper->SetVolumeRayCastFunction(compositeRaycastFunction);//载入体绘制方法  
+	volumeMapper->SetBlendModeToComposite();
+	volumeMapper->SetSampleDistance(0.1);
+	volumeMapper->SetInputConnection(readerImageCast->GetOutputPort());
+	/*fixedPointVolumeMapper=vtkFixedPointVolumeRayCastMapper::New();
+	fixedPointVolumeMapper->SetInput(dicomImagereader->GetOutput());*/
+
+	vtkSmartPointer<vtkVolume>volume = vtkSmartPointer<vtkVolume>::New();
+	volume->SetMapper(volumeMapper);
+	volume->SetProperty(volumeProperty);//设置体属性  
+
+	vtkSmartPointer<vtkRenderer>ren1 = vtkSmartPointer<vtkRenderer>::New();
+	ren1->AddVolume(volume);
+	ren1->SetBackground(1, 0, 0);
+
+	vtkSmartPointer<vtkRenderWindow>renWin = vtkSmartPointer<vtkRenderWindow>::New();
+	widget->GetRenderWindow()->AddRenderer(ren1);
 }
 
 
