@@ -19,10 +19,11 @@ VtkDemo::VtkDemo(QWidget *parent)
 
 void VtkDemo::Init(){
 	graphics = new Graphics();
-	graphics->RenderThreeView(this->ui.qvtkWidget1, this->ui.qvtkWidget2, this->ui.qvtkWidget3, this->ui.qvtkWidget4);
+	this->SetThreeViewMode();
 	//graphics->RenderMarchingCube(this->ui.qvtkWidget1);
 	//graphics->RenderRayCasting(this->ui.qvtkWidget1);
 }
+
 
 void VtkDemo::RegisteComponent(QMainWindow *VtkDemoClass){
 	this->ui.actionOpen->setIcon(QIcon(":/VtkDemo/ImgSrc/openFile.png"));
@@ -39,6 +40,8 @@ void VtkDemo::RegisteComponent(QMainWindow *VtkDemoClass){
 	actionDeleteView = new QAction(VtkDemoClass);
 	actionDeleteView->setObjectName(QStringLiteral("actionDeleteView"));
 	actionDeleteView->setIcon(QIcon(":/VtkDemo/ImgSrc/RayCasting.png"));
+
+	actionSliderMove = new QAction(VtkDemoClass);
 
 	this->ui.mainToolBar->addAction(this->ui.actionOpen);
 	this->ui.mainToolBar->addAction(actionThreeView);
@@ -78,6 +81,8 @@ void VtkDemo::SetThreeViewMode(){
 	this->ui.gridLayout->addWidget(qvtkWidget4, 1, 1, 1, 1);
 
 	graphics->RenderThreeView(qvtkWidget1, qvtkWidget2, qvtkWidget3, qvtkWidget4);
+
+	this->GetThreeViewProps();
 }
 
 void VtkDemo::SetMarchingCubeMode(){
@@ -108,18 +113,6 @@ void VtkDemo::SetRayCastingMode(){
 }
 
 void VtkDemo::DeleteAllView(){
-	/*
-	int num = ui.gridLayout->count();
-	if (!num){
-		return;
-	}
-	QLayoutItem *p[100];
-	for (int i = 0; i <= num; i++){
-		p[i] = ui.gridLayout->itemAt(i);
-		ui.gridLayout->removeItem(p[i]);
-		delete p[i];
-	}*/
-	
 	QLayoutItem *child;
 	while (ui.gridLayout->count() != 0)
 	{
@@ -128,13 +121,38 @@ void VtkDemo::DeleteAllView(){
 		delete child->widget();
 		delete child;
 	}
-	/*
-	delete this->ui.qvtkWidget1;
-	delete this->ui.qvtkWidget2;
-	delete this->ui.qvtkWidget3;
-	delete this->ui.qvtkWidget4;
-	*/
 }
+
+void VtkDemo::GetThreeViewProps(){
+	char* str[3];
+	
+	ui.tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+	ui.tableWidget->resize(ui.tabWidget->width(), ui.tabWidget->height());
+	QTableWidgetItem *item00 = new QTableWidgetItem("ren1");
+	item00->setBackgroundColor(QColor(200, 200, 200));
+
+	ui.tableWidget->setRowHeight(0, 20);
+	ui.tableWidget->setColumnCount(2);
+	ui.tableWidget->setRowCount(3);
+	ui.tableWidget->setItem(0, 0, new QTableWidgetItem("ren1WindowValue"));
+	//itoa(graphics->GetWindowLevelThreeView(0)[0], str[0],10);
+	ui.tableWidget->setItem(0, 1, new QTableWidgetItem("3"));
+
+	QTableWidgetItem *columnHeaderItem0 = ui.tableWidget->horizontalHeaderItem(0);
+	if (columnHeaderItem0){
+		columnHeaderItem0->setText(QString("Props"));
+	}
+
+	QTableWidgetItem *columnHeaderItem1 = ui.tableWidget->horizontalHeaderItem(1);
+	if (columnHeaderItem1){
+		columnHeaderItem1->setText(QString("value"));
+	}
+	
+
+	ui.tableWidget->setColumnWidth(0, ui.tableWidget->width() / 3);
+	ui.tableWidget->setColumnWidth(1, ui.tableWidget->width() * 2 / 3);
+	ui.tableWidget->verticalHeader()->setVisible(false);
+};
 
 void VtkDemo::open()
 {
@@ -148,11 +166,78 @@ void VtkDemo::open()
 	}
 }
 
+void VtkDemo::SetWindowLevel1(){
+	QSlider *slider;
+	slider = ui.horizontalSlider_1;
+	double wl = slider->value();
+	graphics->imgViewer[0]->SetColorLevel(wl);
+	graphics->renWin[0]->Render();
+	ui.spinBox_1->setValue(wl);
+};
+
+void VtkDemo::SetWindowLevel2(){
+	QSlider *slider;
+	slider = ui.horizontalSlider_2;
+	double wl = slider->value();
+	graphics->imgViewer[1]->SetColorLevel(wl);
+	graphics->renWin[1]->Render();
+	ui.spinBox_2->setValue(wl);
+};
+
+void VtkDemo::SetWindowLevel3(){
+	QSlider *slider;
+	slider = ui.horizontalSlider_3;
+	double wl = slider->value();
+	graphics->imgViewer[2]->SetColorLevel(wl);
+	graphics->renWin[2]->Render();
+	ui.spinBox_3->setValue(wl);
+};
+
+void VtkDemo::SetWindow1(){
+	QSlider *slider;
+	slider = ui.horizontalSlider_4;
+	double wl = slider->value();
+	graphics->imgViewer[0]->SetColorWindow(wl);
+	graphics->renWin[0]->Render();
+	ui.spinBox_4->setValue(wl);
+};
+
+void VtkDemo::SetWindow2(){
+	QSlider *slider;
+	slider = ui.horizontalSlider_5;
+	double wl = slider->value();
+	graphics->imgViewer[1]->SetColorWindow(wl);
+	graphics->renWin[1]->Render();
+	ui.spinBox_5->setValue(wl);
+};
+
+
+void VtkDemo::SetWindow3(){
+	QSlider *slider;
+	slider = ui.horizontalSlider_6;
+	double wl = slider->value();
+	graphics->imgViewer[2]->SetColorWindow(wl);
+	graphics->renWin[2]->Render();
+	ui.spinBox_6->setValue(wl);
+};
+
+
+
+
 void VtkDemo::connectRegiste(){
 	connect(this->ui.actionOpen, &QAction::triggered, this, &VtkDemo::open);
 	connect(actionThreeView, &QAction::triggered, this, &VtkDemo::SetThreeViewMode);
 	connect(actionMarchingCube, &QAction::triggered, this, &VtkDemo::SetMarchingCubeMode);
 	connect(actionRayCasting, &QAction::triggered, this, &VtkDemo::SetRayCastingMode);
 	connect(actionDeleteView, &QAction::triggered, this, &VtkDemo::DeleteAllView);
+
+	connect(ui.horizontalSlider_1, &QSlider::valueChanged, this, &VtkDemo::SetWindowLevel1);
+	connect(ui.horizontalSlider_2, &QSlider::valueChanged, this, &VtkDemo::SetWindowLevel2);
+	connect(ui.horizontalSlider_3, &QSlider::valueChanged, this, &VtkDemo::SetWindowLevel3);
+
+	connect(ui.horizontalSlider_4, &QSlider::valueChanged, this, &VtkDemo::SetWindow1);
+	connect(ui.horizontalSlider_5, &QSlider::valueChanged, this, &VtkDemo::SetWindow2);
+	connect(ui.horizontalSlider_6, &QSlider::valueChanged, this, &VtkDemo::SetWindow3);
+
 }
 

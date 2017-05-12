@@ -28,6 +28,20 @@ public:
 
 	void DeleteAllView();
 
+	void GetThreeViewProps();
+
+	void SetWindowLevel1();
+
+	void SetWindowLevel2();
+
+	void SetWindowLevel3();
+
+	void SetWindow1();
+
+	void SetWindow2();
+
+	void SetWindow3();
+
 private:
     Ui::VtkDemoClass ui;
 	QString DicomPath;
@@ -35,5 +49,6 @@ private:
 	QAction *actionMarchingCube;
 	QAction *actionRayCasting;
 	QAction *actionDeleteView;
+	QAction *actionSliderMove;
 	Graphics *graphics;
 };
